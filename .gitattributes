@@ -1,0 +1,21 @@
+# Normalize line endings
+* text=auto
+
+# Force LF in source files (keep repository normalized)
+*.py text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.sh text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Model / data files (don't treat as text)
+*.csv binary
+*.pkl binary
+*.joblib binary

@@ -91,3 +91,6 @@ joblib.dump(model, "return_prediction_model.pkl")
 
 print("Model saved successfully")
 
+joblib.dump(X.columns.tolist(), "model_columns.pkl")
+
+print("Columns saved successfully")

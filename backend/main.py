@@ -7,64 +7,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score
+import joblib
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 CORS(app)
 
-pipeline = None
-feature_columns = None
-
-
-def train_model():
-    global pipeline, feature_columns
-
-    df = pd.read_csv(os.path.join(BASE_DIR, "ml_models", "ecommerce_returns_synthetic_data.csv"))
-
-    df = df.drop(columns=[
-        'Order_ID', 'Product_ID', 'User_ID',
-        'Return_Date', 'Return_Reason', 'Days_to_Return'
-    ])
-
-    df['Return_Status'] = (
-        ((df['Product_Category'] == 'Clothing') & (df['Discount_Applied'] > 25)) |
-        ((df['Shipping_Method'] == 'Express') & (df['Product_Price'] > 300)) |
-        ((df['User_Age'] < 25) & (df['Payment_Method'] == 'PayPal')) |
-        ((df['Order_Quantity'] > 3) & (df['Discount_Applied'] > 20))
-    ).astype(int)
-
-    df['Order_Date'] = pd.to_datetime(df['Order_Date'])
-    df['order_day'] = df['Order_Date'].dt.weekday
-    df['order_month'] = df['Order_Date'].dt.month
-    df['is_weekend'] = (df['Order_Date'].dt.weekday >= 5).astype(int)
-    df = df.drop(columns=['Order_Date'])
-
-    df = pd.get_dummies(df, columns=[
-        'Product_Category', 'User_Gender', 'User_Location',
-        'Payment_Method', 'Shipping_Method'
-    ])
-
-    X = df.drop(columns=['Return_Status'])
-    y = df['Return_Status']
-
-    feature_columns = X.columns.tolist()
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('model', LogisticRegression(max_iter=2000, solver='liblinear'))
-    ])
-
-    pipeline.fit(X_train, y_train)
-
-    y_pred = pipeline.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Model trained with accuracy: {accuracy:.4f}")
-
+pipeline = joblib.load(os.path.join(BASE_DIR, "ml_models", "return_prediction_model.pkl"))
+feature_columns = joblib.load(os.path.join(BASE_DIR, "ml_models", "model_columns.pkl"))
 
 def prepare_input(data):
     input_dict = {}
@@ -132,5 +83,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    train_model()
     app.run(debug=True, port=5000, use_reloader=False)
